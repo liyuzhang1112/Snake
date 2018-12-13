@@ -460,7 +460,7 @@ procedure snakeBoostScore;
 begin
     inc(score, 10);
     gotoXY(2,2);
-    textColor(lightred)
+    textColor(lightred);
     write(' Point: ',score);
 end;
 
