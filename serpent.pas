@@ -239,7 +239,7 @@ var f:file of ranking;
 	r:ranking;
 	i:integer;
 begin	
-    assign(f,'store.dat');
+    assign(f,'store.txt');
 	Reset(f);
 	while not eof(f) do
 	i:=0;
