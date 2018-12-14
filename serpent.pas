@@ -11,28 +11,23 @@ Superviseur: Jean-Baptiste LOUVET
 program serpent;
 uses crt, sysutils, math, rank;
 
-//! 【规！定！】
-//! 有错误就一个一个改，发现bug，先解决掉，然后再添加新功能。
-//! 不要一股脑加一堆新东西上去，然后都有问题，没一个达到预期 能用的。 
-//! 使用Git的一个好处，就是让你可以一步一步跟踪进展，“屁胡走向胜利”。一下子加这么多，而且
-//! 上一个都还有bug没有解决掉的，就加新的东西 而且新的里面也还有bug，这会让人很难去跟踪每个问
-//! 题的错误，解决每个问题对应的bug。
-
-//todo:蛇撞自己不会死 => Done !
-//todo:待处理的bug:创建文件存分数
+//TODO 待处理的bug:创建文件存分数
 //TODO bug: intro界面，第一次无论按什么，只要第二次按了C，都能开始游戏
-//1 pomme : fait gagner 1 points et fait gagner en taille le serpent. => Done !
-//2 bombe : fait perdre une vie, disparaît après 10 secondes. => Done !
-//3 snakeSpeedUp: speed increases for 5 seconds. => Done !
-//4 strewberry : fait gagner 10 points, disparaît après 5 secondes => Done !
-//? 5 diamant : écran rempli de pommes, disparaît après 5 secondes => 真的需要？
+//1 apple : win 5 scores and grow up 1  => Done !
+//2 mushroom : loss 5 scores and reduce 1 => Done !
+//3 heart : get 1 life, disappear in 5 seconds => Done !
+//4 bomb : loss 1 life, disappear in 10 seconds => Done !
+//5 strewberry : win 50 scores => Done !
+//6 speed-up : speed increases for 5 seconds. => Done !
+//TODO 7 diamond : fill screen by apples during 5 seconds
+//8 magic box : a random bean => Done !
 
 
 
 //! ----------------------------------------------------------------------------
 //!                              VARIABLE DECLARATION
 //! ----------------------------------------------------------------------------
-var i,j,len,dir,dirnew,beans_amount:Integer;
+var i,len,dir,dirnew,beans_amount:Integer;
     space_width,space_height:Integer;
     wall_number,wall_length,wall_amount:Integer;
     //整个蛇是由一个2维数组来表示的，这个数组记载了蛇每一截所在的坐标（x,y）。行数代表蛇的长度
@@ -44,7 +39,7 @@ var i,j,len,dir,dirnew,beans_amount:Integer;
     vWalls:array of array of Integer; // coordinates of vertical wall
 	diff,start:String;
 	k:Char;
-	score,speed:Integer;
+	score,speed,life:Integer;
     f:file of ranking;
 	r:ranking;
 
@@ -325,47 +320,78 @@ begin
 	beans[ind,0] := x;
 	beans[ind,1] := y;
 	gotoXY(x,y);
-    r := random(6)+1;
+    r := random(9);
+    r := 8; //* JUST FOR DEBUGGING
     case r of 
-            2:
-            begin
-                beans[ind,2] := 2; // bomb
-                beans[ind,3] := convertToInt(time+encodeTime(0,0,10,0));
-                gotoXY(x,y);
-                textColor(black);
-                write('X');
-            end; 
-            3:
-            begin
-                beans[ind,2] := 3; // snakeSpeedUp
-                beans[ind,3] := 999999;
-                gotoXY(x,y);
-                textColor(blue);
-                write('*');
-            end;   
-            4:
-            begin
-                beans[ind,2] := 4; // strewberry
-                beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
-                gotoXY(x,y);
-                textColor(red);
-                write('*');
-            end;
-            5:
-            begin
-                beans[ind,2] := 5; // diamond
-                beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
-                gotoXY(x,y);
-                textColor(lightcyan);
-                write('*');
-            end;
-        else
-            beans[ind,2] := 1; // normal bean
+        2:
+        begin
+            beans[ind,2] := 2; // mushroom
             beans[ind,3] := 999999;
             gotoXY(x,y);
-            textColor(green);
+            textColor(brown);
             write('*');
         end;
+        3:
+        begin
+            beans[ind,2] := 3; // heart
+            beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
+            gotoXY(x,y);
+            textColor(magenta);
+            write('*');
+        end;
+        4:
+        begin
+            beans[ind,2] := 4; // bomb
+            beans[ind,3] := convertToInt(time+encodeTime(0,0,10,0));
+            gotoXY(x,y);
+            textColor(black);
+            write('X');
+        end;
+        5:
+        begin
+            beans[ind,2] := 5; // strewberry
+            beans[ind,3] := 999999;
+            gotoXY(x,y);
+            textColor(red);
+            write('*');
+        end;
+        6:
+        begin
+            beans[ind,2] := 6; // speed-up bean
+            beans[ind,3] := 999999;
+            gotoXY(x,y);
+            textColor(blue);
+            write('*');
+        end;
+        7:
+        begin
+            beans[ind,2] := 7; // diamond
+            beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
+            gotoXY(x,y);
+            textColor(lightcyan);
+            write('*');
+        end;
+        8:
+        begin
+            beans[ind,2] := random(7)+1; // magic box
+            case beans[ind,2] of
+                3: beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
+                4: beans[ind,3] := convertToInt(time+encodeTime(0,0,10,0));
+                7: beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
+            else
+                beans[ind,3] := 999999;
+            end;
+            gotoXY(x,y);
+            textColor(white);
+            write('?');
+        end;
+    else
+        beans[ind,2] := 1; // apple (normal bean)
+        beans[ind,3] := 999999;
+        gotoXY(x,y);
+        textColor(green);
+        write('*');
+    end;
     textColor(lightred);
 end;
 
@@ -385,9 +411,9 @@ begin
     end;
 end;
 
-//* #1 normal bean
-procedure snakeGrow(x,y,tmp:Integer);
-(*  increase the length of snake if it eats a bean
+//* #1 apple (normal bean)
+procedure snakeGrow(x,y:Integer);
+(*  Increase the length of snake by 1 and win 5 points
     INPUT
         x: X coordinate [int]
         y: Y coordinate [int]
@@ -395,8 +421,8 @@ procedure snakeGrow(x,y,tmp:Integer);
         (none)
 *)
 begin
-    inc(score,1);
-	inc(len,1);
+    inc(score,5); // win 5 points
+	inc(len,1); // grow up 1
 	body[len-1,0] := x;
 	body[len-1,1] := y;
 	gotoXY(x,y);
@@ -406,27 +432,70 @@ begin
 	write(' Point: ',score);
 end;
 
-//* #2 bomb or Game Over
-procedure snakeDie;
-(*  When snake eats a bomb or the game is over or be manually closed
+//* #2 mushroom
+procedure snakeReduce;
+(*  Reduce the length of snake by 1 and loss 5 points
     INPUT
         (none)
     OUTPUT
         (none)
 *)
 begin
-	textColor(lightblue);
-	drawbox(1,11,80,3,'');
-	gotoXY(37,12);
-	textColor(lightred);
-	write('Game Over');
-	textColor(lightgray);
-	gotoXY(20,20);
-	delay(1000);
-    creatFile;
+    inc(score,-5); // loss 5 points
+	gotoXY(body[len-1,0], body[len-1,1]);
+	write(' ');
+	body[len-1,0] := 0;
+	body[len-1,1] := 0;
+	inc(len,-1); // reduce 1
+	gotoXY(2,2); // move cursor back to score panel
+    textColor(lightred);
+	write(' Point: ',score);
 end;
 
-//* #3 speed-up bean
+//* #3 heart
+procedure snakeLifeUp;
+(*  Win 1 extra life
+    INPUT
+        (none)
+    OUTPUT
+        (none)
+*)
+begin
+    inc(life, 1);
+    gotoXY(space_width-9,2);
+    writeln(' Life: ',life);
+end;
+
+//* #4 bomb
+procedure snakeLifeDown;
+(*  Loss 1 life
+    INPUT
+        (none)
+    OUTPUT
+        (none)
+*)
+begin
+    inc(life, -1);
+    gotoXY(space_width-9,2);
+    writeln(' Life: ',life);
+end;
+
+//* #5 strewberry
+procedure snakeBoostScore;
+(*  When snake eats a strawberry
+    INPUT
+        (none)
+    OUTPUT
+        (none)
+*)
+begin
+    inc(score, 50); // win 50 points
+    gotoXY(2,2);
+    textColor(lightred);
+    write(' Point: ',score);
+end;
+
+//* #6 speed-up bean
 procedure snakeSpeedUp;
 (*  When snake eats a speed-up bean
     INPUT
@@ -449,22 +518,7 @@ begin
     end;
 end;
 
-//* #4 strewberry
-procedure snakeBoostScore;
-(*  When snake eats a strawberry
-    INPUT
-        (none)
-    OUTPUT
-        (none)
-*)
-begin
-    inc(score, 10);
-    gotoXY(2,2);
-    textColor(lightred);
-    write(' Point: ',score);
-end;
-
-//TODO #5 diamond
+//TODO #7 diamond
 procedure snakeBoostBean;
 var i,j:integer;
 begin
@@ -478,8 +532,30 @@ begin
             end;
 end;
 
+//* Game Over
+procedure snakeDie;
+(*  When snake eats a bomb or the game is over or be manually closed
+    INPUT
+        (none)
+    OUTPUT
+        (none)
+*)
+begin
+	textColor(lightblue);
+	drawbox(1,11,80,3,'');
+	gotoXY(37,12);
+	textColor(lightred);
+	write('Game Over');
+	textColor(lightgray);
+	gotoXY(20,20);
+	delay(1000);
+    // creatFile;
+    halt;
+end;
+
 procedure checkSnakeStatus(x,y,ind:integer);
-(*  Find out which kind of bean that has been eaten by snake
+(*  Find out which kind of bean that has been eaten by snake and snake status
+    after eating
     INPUT
         x: X coordinate [int]
         y: Y coordinate [int]
@@ -488,12 +564,15 @@ procedure checkSnakeStatus(x,y,ind:integer);
 *)
 begin
     case beans[ind,2] of
-        1: begin snakeGrow(x,y,ind); end; // #1 normal bean snakeGrow(x,y,ind);
-        2: begin snakeDie; end; // #2 bomb
-        3: begin snakeSpeedUp; end; // #3 speed-up
-        4: begin snakeBoostScore; end; // #4 strawberry
-        5: begin snakeBoostBean; end;// #5 diamond
+        1: begin snakeGrow(x,y); end; // #1 apple(normal bean) snakeGrow(x,y);
+        2: begin snakeReduce; end; // #2 mushroom
+        3: begin snakeLifeUp; end; // #3 heart
+        4: begin snakeLifeDown; end; // #4 bomb
+        5: begin snakeBoostScore; end; // #5 strawberry snakeBoostScore;
+        6: begin snakeSpeedUp; end; // #6 speed-up snakeSpeedUp;
+        7: begin snakeBoostBean; end;// #7 diamond snakeBoostBean;
     end;
+    if (life = 0) or (len = 0) then snakeDie;
 end;
 
 
@@ -532,9 +611,13 @@ begin
 
     //* JUST FOR DEBUGGING vvv
     gotoXY(30,2);
-    write(' hist, effect:', buff[0,0], ', ', buff[0,1]);
+    write(' snake:', body[0,0], ', ', body[0,1]);
     gotoXY(30,3);
-    write(' hist, effect:', buff[1,0], ', ', buff[1,1]);
+    write(' snake:', body[1,0], ', ', body[1,1]);
+    gotoXY(30,4);
+    write(' snake:', body[2,0], ', ', body[2,1]);
+    gotoXY(30,5);
+    write(' snake:', body[3,0], ', ', body[3,1]);
     gotoXY(60,2);
     write(' speed:', speed);
     gotoXY(60,3);
@@ -560,9 +643,9 @@ begin
 	end;
     // ***** Moving *****
 	gotoXY(body[0,0], body[0,1]); write('x'); // change snake head to body
-	gotoXY(body[len-1,0], body[len-1,1]); write(' '); // change snake tail to empty
 	wasx := body[len-1,0];
 	wasy := body[len-1,1];
+	gotoXY(wasx, wasy); write(' '); // change snake tail to empty
     // check if snake meets itself
 	if (snakeContain(body[0,0]+x, body[0,1]+y)) then snakeDie;
     // change segment of snake: from previous position to next position
@@ -640,34 +723,31 @@ begin
 	// ***** Initiation *****
 	ClrScr;
 	Randomize;
+	dir := 1; // initial direction {1=east, 2=south, 3=west, 4=north}
 	len := 3; // initial length of snake
-	speed := 400; // time to delay
+    life := 3; // initial lives of snake
+	score := 0; // initial score
+	speed := 400; // initial time to delay
     beans_amount := 15; // initial amount of beans
     wall_number := 4;
     wall_length := 3;
     wall_amount := wall_number * wall_length;
-	score:=0;
-	dir:=1; // default direction {1=east, 2=south, 3=west, 4=north}
     space_width := 80; // width of gaming space
     space_height := 24; // height of gaming space
-	// initiate snake
+	// initiate snake and buff array
 	for i := 0 to 254 do
         body[i,0] := 0;
         body[i,1] := 0;
+        buff[i,0] := 0;
+        buff[i,1] := 0;
     body[0,0] := 12;
     body[0,1] := 12;
     body[1,0] := 11;
     body[1,1] := 12;
     body[2,0] := 10;
     body[2,1] := 12;
-    // initiate buff
-    for j:=0 to 254 do
-        buff[j,0] := 0;
-        buff[j,1] := 0;
-	// print perimeter on screen
-    // textColor(lightblue);
-	// drawbox(1,1,space_width,space_height,'');
-	// drawbox(1,1,space_width,3,'Jeu de Serpent (c) 2018');
+    
+    // ***** Introduction *****
 	intros;
 	if start = 'c' then
 	begin
@@ -680,6 +760,8 @@ begin
         drawsnake;
         gotoXY(2,2);
         writeln(' Point: ',score);
+        gotoXY(space_width-9,2);
+        writeln(' Life: ',life);
         // initiate beans
         initiateBean(beans_amount); // initiate beans by a given number
         if diff='d' then
@@ -687,6 +769,7 @@ begin
             horizontalWalls(wall_number,wall_length,wall_amount); // create horizontal walls
             verticalWalls(wall_number,wall_length,wall_amount); // create vertical walls
         end;
+        
         // ***** Start Game *****
         repeat
             delay(speed);
