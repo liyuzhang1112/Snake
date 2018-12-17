@@ -19,7 +19,7 @@ uses crt, sysutils, math, rank;
 //4 bomb : loss 1 life, disappear in 10 seconds => Done !
 //5 strewberry : win 50 scores => Done !
 //6 speed-up : speed increases for 5 seconds. => Done !
-//TODO 7 diamond : fill screen by apples during 5 seconds
+//7 diamond : fill screen by apples for 5 seconds => Done !
 //8 magic box : a random bean => Done !
 
 
@@ -27,18 +27,16 @@ uses crt, sysutils, math, rank;
 //! ----------------------------------------------------------------------------
 //!                              VARIABLE DECLARATION
 //! ----------------------------------------------------------------------------
-var i,len,dir,dirnew,beans_amount:Integer;
+var indice,len,dir,dirnew,beans_amount,beans_amount_default:Integer;
     space_width,space_height:Integer;
     wall_number,wall_length,wall_amount:Integer;
-    //整个蛇是由一个2维数组来表示的，这个数组记载了蛇每一截所在的坐标（x,y）。行数代表蛇的长度
-    //第一行是蛇头。第一列是横坐标x，第二列是纵坐标y——如果我没记错的话
 	body:array[0..254, 0..1] of Integer; // coordinates of snake
     buff:array[0..254, 0..1] of LongInt; // snake buff: effect
     beans:array of array of LongInt; // coordinates of bean
     hWalls:array of array of Integer; // coordinates of horizontal wall
     vWalls:array of array of Integer; // coordinates of vertical wall
 	diff,start:String;
-	k:Char;
+	key:Char;
 	score,speed,life:Integer;
     f:file of ranking;
 	r:ranking;
@@ -73,6 +71,7 @@ function snakeContain(x,y:integer):boolean;
         snakeContain: if existant, true; else, false [boolean]
 *)
 // var i:integer;
+var i:Integer;
 begin
 	snakeContain := false;
 	for i := 0 to len-1 do
@@ -82,6 +81,32 @@ begin
             snakeContain := true;
             break;
         end
+	end;
+end;
+
+function wallContain(x,y:integer):boolean;
+(*  Check if a point is already existed in snake body
+    INPUT
+        x: X coordinate [int]
+        y: Y coordinate [int]
+    OUTPUT
+        snakeContain: if existant, true; else, false [boolean]
+*)
+var i:Integer;
+begin
+	wallContain := false;
+	for i := 0 to wall_amount-1 do
+	begin
+        if (hWalls[i,0] = x) and (hWalls[i,1] = y) then
+        begin
+            wallContain := true;
+            break;
+        end;
+        if (vWalls[i,0] = x) and (vWalls[i,1] = y) then
+        begin
+            wallContain := true;
+            break;
+        end;
 	end;
 end;
 
@@ -148,7 +173,7 @@ procedure horizontalWalls(wall_number,wall_length,wall_amount:Integer);
 *)
 var ind,l,pos,x,y:Integer;
 begin
-    setLength(hWalls, wall_amount, 1);
+    setLength(hWalls, wall_amount, 2);
     for ind := 0 to wall_number-1 do
     begin
         // find a random position for new wall
@@ -160,9 +185,9 @@ begin
         for l := 1 to wall_length do
         begin
             pos := ind * wall_length + l - 1;
-            hWalls[pos,1] := x + l - 1;
-            hWalls[pos,2] := y;
-            gotoXY(hWalls[pos,1],hWalls[pos,2]);
+            hWalls[pos,0] := x + l - 1;
+            hWalls[pos,1] := y;
+            gotoXY(hWalls[pos,0],hWalls[pos,1]);
             textColor(lightblue);
             write('-');
         end;
@@ -175,7 +200,7 @@ procedure verticalWalls(wall_number,wall_length,wall_amount:Integer);
 *)
 var ind,l,pos,x,y:Integer;
 begin
-    setLength(vWalls, wall_amount, 1);
+    setLength(vWalls, wall_amount, 2);
     for ind := 0 to wall_number-1 do
     begin
         // find a random position for new wall
@@ -187,9 +212,9 @@ begin
         for l := 1 to wall_length do
         begin
             pos := ind * wall_length + l - 1;
-            vWalls[pos,1] := x;
-            vWalls[pos,2] := y + l - 1;
-            gotoXY(vWalls[pos,1],vWalls[pos,2]);
+            vWalls[pos,0] := x;
+            vWalls[pos,1] := y + l - 1;
+            gotoXY(vWalls[pos,0],vWalls[pos,1]);
             textColor(lightblue);
             write('|');
         end;
@@ -278,7 +303,7 @@ end;
 //* store the score 
 procedure creatFile;
 var i:integer;
-begin	
+begin
     ClrScr;
     assign(f,'store.txt');
 	Reset(f);
@@ -321,7 +346,7 @@ begin
 	beans[ind,1] := y;
 	gotoXY(x,y);
     r := random(9);
-    r := 8; //* JUST FOR DEBUGGING
+    // r := 7; //* JUST FOR DEBUGGING
     case r of 
         2:
         begin
@@ -369,7 +394,7 @@ begin
             beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
             gotoXY(x,y);
             textColor(lightcyan);
-            write('*');
+            write('◊');
         end;
         8:
         begin
@@ -396,7 +421,7 @@ begin
 end;
 
 procedure initiateBean(amount:integer);
-(*  Initiate beans at the begining of game
+(*  Initiate beans by a given number of beans
     INPUT
         amount: initial number of beans [int]
     OUTPUT
@@ -503,7 +528,8 @@ procedure snakeSpeedUp;
     OUTPUT
         (none)
 *)
-var endtime: LongInt;
+var i:Integer;
+var endtime:LongInt;
 begin
     if (speed <> 0) then inc(speed, -100);
     endtime := convertToInt(time+encodeTime(0,0,10,0)); // i.e. last 10s
@@ -520,16 +546,83 @@ end;
 
 //TODO #7 diamond
 procedure snakeBoostBean;
-var i,j:integer;
+var i,j,ind:Integer;
+var endtime:LongInt;
 begin
+    // fill the screen
     textColor(green);
-    for i:=2 to space_width-1 do 
-        for j:=4 to space_height-1 do 
-            if not (snakeContain(i,j)) then 
-            begin
-                gotoXY(i,j);
-                writeln('*');
-            end;
+    if (diff = 'd') then
+    begin
+        for i := 2 to space_width-1 do
+        // begin  
+            for j := 4 to space_height-2 do
+            // begin
+                if not (snakeContain(i,j)) and not (wallContain(i,j)) then
+                begin
+                    ind := (i-1) * (j-3) - 1;
+                    beans[ind,2] := 1; // apple (normal bean)
+                    beans[ind,3] := 999999;
+                    gotoXY(i,j);
+                    writeln('*');
+                end;
+            // end;
+        // end;
+    end
+    else
+    begin
+        ind := 0;
+        beans_amount := 1;
+        for i := 2 to space_width-1 do
+            for j := 4 to space_height-2 do
+                if not (snakeContain(i,j)) then 
+                begin
+                    // ind := (space_height-6) + (space_height-5)*(i-3) + (j-3); // 19*i + j - 42;
+                    setLength(beans, beans_amount, 4);
+                    beans[ind,0] := i; // apple (normal bean)
+                    beans[ind,1] := j;
+                    beans[ind,2] := 1;
+                    beans[ind,3] := 999999;
+                    gotoXY(i,j);
+                    write('*');
+                    // gotoXY(i,j);
+                    // write('T');
+                    // write(ind);
+                    // delay(20);
+                    ind := ind + 1;
+                    beans_amount := beans_amount + 1;
+                end;
+    end;
+    beans_amount := beans_amount - 1;
+    // set endtime
+    endtime := convertToInt(time+encodeTime(0,0,5,0)); // i.e. last 10s
+    for i := 0 to 254 do // find an unused position to save buff
+    begin
+        if (buff[i,0] = 0) then
+        begin
+            buff[i,0] := endtime;
+            buff[i,1] := 666;
+            break;
+        end;
+    end;
+    gotoxy(2,2);
+    write('            ',beans_amount);
+    textColor(lightred);
+end;
+
+procedure snakeRecoverBean;
+var i,j:Integer;
+begin
+    for i := 2 to space_width-1 do
+        for j := 4 to space_height-2 do
+        begin
+            gotoXY(i,j);
+            write(' ');
+        end;
+    gotoxy(2,2);
+    write('            ',beans_amount);
+    drawsnake;
+    initiateBean(beans_amount_default);
+    beans_amount := beans_amount_default;
 end;
 
 //* Game Over
@@ -562,6 +655,8 @@ procedure checkSnakeStatus(x,y,ind:integer);
         ind: index of bean [int]
     OUTPUT
 *)
+var i:Integer;
+var renew:Boolean;
 begin
     case beans[ind,2] of
         1: begin snakeGrow(x,y); end; // #1 apple(normal bean) snakeGrow(x,y);
@@ -573,6 +668,20 @@ begin
         7: begin snakeBoostBean; end;// #7 diamond snakeBoostBean;
     end;
     if (life = 0) or (len = 0) then snakeDie;
+    // check if it's necessary to generate new bean
+    renew := True;
+    if (beans[ind,2] <> 7) then
+    begin
+        for i := 0 to 254 do
+        begin
+            if (buff[i,1] = 666) then
+            begin
+                renew := False;
+                break;
+            end;
+        end;
+    end;
+    if renew then generateBean(ind);
 end;
 
 
@@ -584,13 +693,21 @@ procedure checkTime;
     OUTPUT
         (none)
 *)
-var now:LongInt; ind:Integer;
+var now:LongInt; i,ind:Integer;
 begin
     now := convertToInt(time);
-    // check buff
+    // check/disappear buff
     if (buff[0,0] <> 0) and (now >= buff[0,0]) then
     begin
-        inc(speed, buff[0,1]);
+        if (buff[0,1] = 100) then
+        begin
+            inc(speed, 100);
+        end
+        else if (buff[0,1] = 666) then // recover origin beans
+        begin
+            snakeRecoverBean;
+        end;
+        // clear this buff
         for i := 1 to 254 do
         begin
             buff[i-1,0] := buff[i,0];
@@ -598,7 +715,7 @@ begin
         end;
     end;
 
-    // check beans
+    // check/disappear beans
     for ind := 0 to beans_amount-1 do
     begin
         if (now >= beans[ind,3]) then
@@ -610,16 +727,18 @@ begin
     end;
 
     //* JUST FOR DEBUGGING vvv
+    gotoXY(30,1);
+    write(' buff:', buff[0,0], ', ', buff[0,1]);
     gotoXY(30,2);
-    write(' snake:', body[0,0], ', ', body[0,1]);
+    write(' buff:', buff[1,0], ', ', buff[1,1]);
     gotoXY(30,3);
-    write(' snake:', body[1,0], ', ', body[1,1]);
-    gotoXY(30,4);
-    write(' snake:', body[2,0], ', ', body[2,1]);
-    gotoXY(30,5);
-    write(' snake:', body[3,0], ', ', body[3,1]);
-    gotoXY(60,2);
+    write(' buff:', buff[2,0], ', ', buff[2,1]);
+    // gotoXY(30,4);
+    // write(' buff:', buff[3,0], ', ', buff[3,1]);
+    gotoXY(60,1);
     write(' speed:', speed);
+    gotoXY(60,2);
+    write(' len:', len);
     gotoXY(60,3);
     write(' time:', now);
     //* END OF DEBUGGING ^^^
@@ -664,17 +783,17 @@ begin
         if (snakeContain(beans[tmp,0],beans[tmp,1])) then // a bean is eaten
         begin
             checkSnakeStatus(wasx, wasy, tmp);
-            generateBean(tmp);
+            // generateBean(tmp);
             break;
         end;
     end;
     // ***** Hitting *****
     if diff='d' then
     begin
-        for tmp := 0 to wall_amount-1 do
+        for tmp := 0 to wall_amount-1 do // snake meets wall
         begin
-            if (snakeContain(hWalls[tmp,1],hWalls[tmp,2])) or
-               (snakeContain(vWalls[tmp,1],vWalls[tmp,2])) then // snake meets wall
+            if (snakeContain(hWalls[tmp,0],hWalls[tmp,1])) or
+               (snakeContain(vWalls[tmp,0],vWalls[tmp,1])) then
             begin
                 snakeDie;
             end;
@@ -729,17 +848,18 @@ begin
 	score := 0; // initial score
 	speed := 400; // initial time to delay
     beans_amount := 15; // initial amount of beans
+    beans_amount_default := beans_amount;
     wall_number := 4;
     wall_length := 3;
     wall_amount := wall_number * wall_length;
     space_width := 80; // width of gaming space
     space_height := 24; // height of gaming space
 	// initiate snake and buff array
-	for i := 0 to 254 do
-        body[i,0] := 0;
-        body[i,1] := 0;
-        buff[i,0] := 0;
-        buff[i,1] := 0;
+	for indice := 0 to 254 do
+        body[indice,0] := 0;
+        body[indice,1] := 0;
+        buff[indice,0] := 0;
+        buff[indice,1] := 0;
     body[0,0] := 12;
     body[0,1] := 12;
     body[1,0] := 11;
@@ -775,11 +895,11 @@ begin
             delay(speed);
             if (keypressed) then
             begin
-                k:=readkey;
-                if (k = #0) then
+                key:=readkey;
+                if (key = #0) then
                 begin
-                    k:=readkey;
-                    case k of
+                    key:=readkey;
+                    case key of
                         #77: dirnew := 1; // right (i.e. east)
                         #80: dirnew := 2; // down (i.e. south)
                         #75: dirnew := 3; // left (i.e. west)
@@ -790,7 +910,7 @@ begin
                     if (dir = 3) and (dirnew <> 1) then dir := dirnew;
                     if (dir = 4) and (dirnew <> 2) then dir := dirnew;
                 end;
-                if (k = #27) then snakeDie; // press ESC key
+                if (key = #27) then snakeDie; // press ESC key
             end;
             //todo: disappearBean(beans_amount,d);
             movesnake;
