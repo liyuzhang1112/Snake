@@ -35,7 +35,6 @@ Var indice,len,dir,dirnew,beans_amount,beans_amount_default:   Integer;
     diff,start:   String;
     key:   Char;
     score,speed,life:   Integer;
-    // f:   File Of Ranking;
     recorder:   Ranking;
 
 Const FILENAME = 'scoreboard.dat';
@@ -127,20 +126,17 @@ Function saveToFile(playerNb:Integer; playerName:String; playerScore:Integer;
 Var fsOut:   TFileStream;
     newNb, newScore: String;
 Begin
-    // By default assume the writing will fail.
     result := false;
     newNb := intToStr(playerNb);
     newScore := intToStr(playerScore);
-    // Write the given string to a file, catching potential errors in the process.
-    Try
+    Try // Try to save data to disk
         fsOut := TFileStream.Create(filePath, fmCreate);
         fsOut.Write(newNb[1], length(newNb));
         fsOut.Write(playerName[1], length(playerName));
         fsOut.Write(newScore[1], length(newScore));
         fsOut.Free;
-        // At his point it is known that the writing went ok.
         result := true
-    Except
+    Except // When error occurs during writing
         on E:Exception Do
         writeln('String could not be written. Details: ', E.ClassName, ': ',
                 E.Message);
@@ -427,9 +423,9 @@ Begin
              Begin
                  beans[ind,2] := random(7)+1;
                  Case beans[ind,2] Of 
-                     3:   beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
-                     4:   beans[ind,3] := convertToInt(time+encodeTime(0,0,10,0));
-                     7:   beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
+                     3: beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
+                     4: beans[ind,3] := convertToInt(time+encodeTime(0,0,10,0));
+                     7: beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
                      Else
                          beans[ind,3] := 999999;
                  End;
