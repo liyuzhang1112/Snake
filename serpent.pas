@@ -10,8 +10,9 @@ Superviseur: Jean-Baptiste LOUVET
 *******************************************************************************)
 
 Program serpent;
+{$mode objfpc}
 
-Uses crt, sysutils, math, rank;
+Uses crt, sysutils, math, rank, classes;
 
 
 
@@ -34,9 +35,10 @@ Var indice,len,dir,dirnew,beans_amount,beans_amount_default:   Integer;
     diff,start:   String;
     key:   Char;
     score,speed,life:   Integer;
-    f:   File Of ranking;
-    r:   ranking;
+    // f:   File Of Ranking;
+    recorder:   Ranking;
 
+Const FILENAME = 'scoreboard.dat';
 
 
 //! ----------------------------------------------------------------------------
@@ -116,6 +118,33 @@ Var HH, MM, SS, MS:   Word;
 Begin
     DecodeTime(t, HH, MM, SS, MS);
     convertToInt := HH*3600 + MM*60 + SS;
+End;
+
+
+Function saveToFile(playerNb:Integer; playerName:String; playerScore:Integer;
+                    filePath: AnsiString):boolean;
+(**)
+Var fsOut:   TFileStream;
+    newNb, newScore: String;
+Begin
+    // By default assume the writing will fail.
+    result := false;
+    newNb := intToStr(playerNb);
+    newScore := intToStr(playerScore);
+    // Write the given string to a file, catching potential errors in the process.
+    Try
+        fsOut := TFileStream.Create(filePath, fmCreate);
+        fsOut.Write(newNb[1], length(newNb));
+        fsOut.Write(playerName[1], length(playerName));
+        fsOut.Write(newScore[1], length(newScore));
+        fsOut.Free;
+        // At his point it is known that the writing went ok.
+        result := true
+    Except
+        on E:Exception Do
+        writeln('String could not be written. Details: ', E.ClassName, ': ',
+                E.Message);
+    End
 End;
 
 
@@ -248,52 +277,52 @@ Var pp,i,s,newp:   Integer;
     n:   String;
 Begin
     //start to refresh 
-    s := r.score[ind];
-    n := r.name[ind];
+    s := recorder.score[ind];
+    n := recorder.name[ind];
     //newp find out positon of new record
     newp := 0;
     Repeat
         newp := newp+1;
-    Until (s>=r.score[newp]);
+    Until (s>=recorder.score[newp]);
     //check out if player played before
     pp := 0;
     Repeat
         pp := pp+1;
-    Until (n=r.name[pp]) Or (pp=ind);
+    Until (n=recorder.name[pp]) Or (pp=ind);
     //player played before but not break his record
     //n position of previous record of same player
-    If (r.name[pp]=n) And (r.score[pp]>=s) Then
+    If (recorder.name[pp]=n) And (recorder.score[pp]>=s) Then
         Begin
-            r.name[ind] := '';
-            r.score[ind] := 0;
+            recorder.name[ind] := '';
+            recorder.score[ind] := 0;
         End
         //player played before and break his record
-    Else If (r.name[pp]=n) And (r.score[pp]<s) Then
+    Else If (recorder.name[pp]=n) And (recorder.score[pp]<s) Then
              Begin
                  For i:=pp Downto newp+1 Do
                      Begin
-                         r.score[i] := r.score[i-1];
-                         r.name[i] := r.name[i-1];
+                         recorder.score[i] := recorder.score[i-1];
+                         recorder.name[i] := recorder.name[i-1];
                      End;
-                 r.score[newp] := s;
-                 r.name[newp] := n;
-                 r.name[ind] := '';
-                 r.score[ind] := 0;
+                 recorder.score[newp] := s;
+                 recorder.name[newp] := n;
+                 recorder.name[ind] := '';
+                 recorder.score[ind] := 0;
              End
              //player haven't played before
     Else
         Begin
             For i:=ind Downto newp+1 Do
                 Begin
-                    r.score[i] := r.score[i-1];
-                    r.name[i] := r.name[i-1];
+                    recorder.score[i] := recorder.score[i-1];
+                    recorder.name[i] := recorder.name[i-1];
                 End;
-            r.score[newp] := s;
-            r.name[newp] := r.name[ind];
+            recorder.score[newp] := s;
+            recorder.name[newp] := recorder.name[ind];
         End;
     For i:=1 To max Do
         Begin
-            write(r.name[i],' ',r.score[i]);
+            write(recorder.name[i],' ',recorder.score[i]);
             writeln();
         End;
 End;
@@ -306,30 +335,30 @@ Procedure creatFile;
    OUTPUT
        (none)
 *)
-Var i:   Integer;
+Var playerNb:   Integer;
+    playerName:   String;
+    playerScore:   Integer;
 Begin
     ClrScr;
-    assign(f,'store.txt');
-    Reset(f);
-    While Not eof(f) Do
-        i := 0;
-    Repeat
-        read(f,r);
-        i := i+1;
-    Until (r.name[i]='');
-    ClrScr;
+    // While Not eof(f) Do
+    //     i := 0;
+    // Repeat
+    //     read(f,r);
+    //     i := i+1;
+    // Until (r.name[i]='');
+    // ClrScr;
     textColor(lightred);
     gotoXY(20,5);
-    writeln('Entrez votre nom');
-    readln(r.name[i]);
-    //todo:directly readln the score
-    writeln('Entrez votre point');
-    readln(r.score[i]);
-    assign(f,'ranking');
-    rewrite(f);
-    refreshRank(i);
-    write(f,r);
-    close(f);
+    writeln('Entrez votre nom :');
+    playerNb := 1;
+    readln(playerName);
+    playerScore := score;
+    // refreshRank(i);
+    If saveToFile(playerNb, playerName, playerScore, FILENAME) Then
+        writeln('[OK] Score succesfully written to file')
+    Else
+        writeln('[ERROR] Writing score to file failed !');
+
 End;
 
 //* vvvvvvvvvvvvvvvvvvvvvvvvv Beans and Effects vvvvvvvvvvvvvvvvvvvvvvvvv
@@ -645,7 +674,7 @@ Begin
     textColor(lightgray);
     gotoXY(20,20);
     delay(1000);
-    // creatFile;
+    creatFile;
     halt;
 End;
 
