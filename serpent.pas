@@ -341,7 +341,7 @@ begin
     repeat // random position for new bean
         x := random(space_width-3)+2;
         y := random(space_height-5)+4;
-    until not snakeContain(x,y);
+    until not snakeContain(x,y); //TODO: not contained in wall
 	beans[ind,0] := x;
 	beans[ind,1] := y;
 	gotoXY(x,y);
@@ -352,7 +352,6 @@ begin
         begin
             beans[ind,2] := 2; // mushroom
             beans[ind,3] := 999999;
-            gotoXY(x,y);
             textColor(brown);
             write('*');
         end;
@@ -360,7 +359,6 @@ begin
         begin
             beans[ind,2] := 3; // heart
             beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
-            gotoXY(x,y);
             textColor(magenta);
             write('*');
         end;
@@ -368,7 +366,6 @@ begin
         begin
             beans[ind,2] := 4; // bomb
             beans[ind,3] := convertToInt(time+encodeTime(0,0,10,0));
-            gotoXY(x,y);
             textColor(black);
             write('X');
         end;
@@ -376,7 +373,6 @@ begin
         begin
             beans[ind,2] := 5; // strewberry
             beans[ind,3] := 999999;
-            gotoXY(x,y);
             textColor(red);
             write('*');
         end;
@@ -384,7 +380,6 @@ begin
         begin
             beans[ind,2] := 6; // speed-up bean
             beans[ind,3] := 999999;
-            gotoXY(x,y);
             textColor(blue);
             write('*');
         end;
@@ -392,7 +387,6 @@ begin
         begin
             beans[ind,2] := 7; // diamond
             beans[ind,3] := convertToInt(time+encodeTime(0,0,5,0));
-            gotoXY(x,y);
             textColor(lightcyan);
             write('◊');
         end;
@@ -406,14 +400,12 @@ begin
             else
                 beans[ind,3] := 999999;
             end;
-            gotoXY(x,y);
             textColor(white);
             write('?');
         end;
     else
         beans[ind,2] := 1; // apple (normal bean)
         beans[ind,3] := 999999;
-        gotoXY(x,y);
         textColor(green);
         write('*');
     end;
@@ -544,7 +536,7 @@ begin
     end;
 end;
 
-//TODO #7 diamond
+//* #7 diamond
 procedure snakeBoostBean;
 var i,j,ind:Integer;
 var endtime:LongInt;
@@ -552,11 +544,9 @@ begin
     // fill the screen
     textColor(green);
     if (diff = 'd') then
-    begin
+    begin //TODO correct the unfinished bug
         for i := 2 to space_width-1 do
-        // begin  
             for j := 4 to space_height-2 do
-            // begin
                 if not (snakeContain(i,j)) and not (wallContain(i,j)) then
                 begin
                     ind := (i-1) * (j-3) - 1;
@@ -565,8 +555,6 @@ begin
                     gotoXY(i,j);
                     writeln('*');
                 end;
-            // end;
-        // end;
     end
     else
     begin
@@ -594,7 +582,7 @@ begin
     end;
     beans_amount := beans_amount - 1;
     // set endtime
-    endtime := convertToInt(time+encodeTime(0,0,5,0)); // i.e. last 10s
+    endtime := convertToInt(time+encodeTime(0,0,5,0)); // i.e. last 5s
     for i := 0 to 254 do // find an unused position to save buff
     begin
         if (buff[i,0] = 0) then
@@ -605,7 +593,6 @@ begin
         end;
     end;
     gotoxy(2,2);
-    write('            ',beans_amount);
     textColor(lightred);
 end;
 
@@ -618,8 +605,6 @@ begin
             gotoXY(i,j);
             write(' ');
         end;
-    gotoxy(2,2);
-    write('            ',beans_amount);
     drawsnake;
     initiateBean(beans_amount_default);
     beans_amount := beans_amount_default;
