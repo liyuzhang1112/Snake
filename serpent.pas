@@ -18,7 +18,6 @@ Uses crt, sysutils, math, rank;
 //! ----------------------------------------------------------------------------
 //!                              VARIABLE DECLARATION
 //! ----------------------------------------------------------------------------
-
 Var indice,len,dir,dirnew,beans_amount,beans_amount_default:   Integer;
     space_width,space_height:   Integer;
     wall_number,wall_length,wall_amount:   Integer;
@@ -40,10 +39,10 @@ Var indice,len,dir,dirnew,beans_amount,beans_amount_default:   Integer;
 
 
 
-    //! ----------------------------------------------------------------------------
-    //!                                   FUNCTION
-    //! ----------------------------------------------------------------------------
-    //* when snake meets wall
+//! ----------------------------------------------------------------------------
+//!                                   FUNCTION
+//! ----------------------------------------------------------------------------
+//* when snake meets wall
 Function snakeCollision():   Boolean;
 (*  Check if a part of snake has touched the obstacle
     INPUT
@@ -352,7 +351,6 @@ Begin
     beans[ind,1] := y;
     gotoXY(x,y);
     r := random(9);
-    r := 7;
     Case r Of 
         2: // mushroom
              Begin
@@ -444,16 +442,13 @@ Procedure snakeGrow(x,y:Integer);
         (none)
 *)
 Begin
-    inc(score,5);
-    // win 5 points
-    inc(len,1);
-    // grow up 1
+    inc(score,5); // win 5 points
+    inc(len,1); // grow up 1
     body[len-1,0] := x;
     body[len-1,1] := y;
     gotoXY(x,y);
     write('x');
-    gotoXY(2,2);
-    // move cursor back to score panel
+    gotoXY(2,2); // move cursor back to score panel    
     textColor(lightred);
     write(' Point: ',score);
 End;
@@ -467,16 +462,13 @@ Procedure snakeReduce;
         (none)
 *)
 Begin
-    inc(score,-5);
-    // loss 5 points
+    inc(score,-5); // loss 5 points    
     gotoXY(body[len-1,0], body[len-1,1]);
     write(' ');
     body[len-1,0] := 0;
     body[len-1,1] := 0;
-    inc(len,-1);
-    // reduce 1
-    gotoXY(2,2);
-    // move cursor back to score panel
+    inc(len,-1); // reduce snake length by 1
+    gotoXY(2,2); // move cursor back to score panel    
     textColor(lightred);
     write(' Point: ',score);
 End;
@@ -519,7 +511,6 @@ Procedure snakeBoostScore;
 *)
 Begin
     inc(score, 50);
-    // win 50 points
     gotoXY(2,2);
     textColor(lightred);
     write(' Point: ',score);
@@ -537,8 +528,7 @@ Var i:   Integer;
     endtime:   LongInt;
 Begin
     If (speed <> 0) Then inc(speed, -100);
-    endtime := convertToInt(time+encodeTime(0,0,10,0));
-    // i.e. last 10s
+    endtime := convertToInt(time+encodeTime(0,0,10,0)); // i.e. last 10s    
     For i := 0 To 254 Do
         // find an unused position to save buff
         Begin
@@ -562,53 +552,46 @@ Procedure snakeBoostBean;
 Var i,j,ind:   Integer;
     endtime:   LongInt;
 Begin
-    // fill the screen
     textColor(green);
+    ind := 0;
+    beans_amount := 1;
     If (diff = 'd') Then
         Begin
-            //TODO correct the unfinished bug
             For i := 2 To space_width-1 Do
                 For j := 4 To space_height-2 Do
                     If Not (snakeContain(i,j)) And Not (wallContain(i,j)) Then
                         Begin
-                            ind := (i-1) * (j-3) - 1;
-                            beans[ind,2] := 1;
-                            // apple (normal bean)
-                            beans[ind,3] := 999999;
-                            gotoXY(i,j);
-                            writeln('*');
-                        End;
-        End
-    Else
-        Begin
-            ind := 0;
-            beans_amount := 1;
-            For i := 2 To space_width-1 Do
-                For j := 4 To space_height-2 Do
-                    If Not (snakeContain(i,j)) Then
-                        Begin
-
-                      // ind := (space_height-6) + (space_height-5)*(i-3) + (j-3); // 19*i + j - 42;
                             setLength(beans, beans_amount, 4);
                             beans[ind,0] := i;
-                            // apple (normal bean)
                             beans[ind,1] := j;
                             beans[ind,2] := 1;
                             beans[ind,3] := 999999;
                             gotoXY(i,j);
                             write('*');
-                            // gotoXY(i,j);
-                            // write('T');
-                            // write(ind);
-                            // delay(20);
+                            ind := ind + 1;
+                            beans_amount := beans_amount + 1;
+                        End;
+        End
+    Else
+        Begin
+            For i := 2 To space_width-1 Do
+                For j := 4 To space_height-2 Do
+                    If Not (snakeContain(i,j)) Then
+                        Begin
+                            setLength(beans, beans_amount, 4);
+                            beans[ind,0] := i;
+                            beans[ind,1] := j;
+                            beans[ind,2] := 1;
+                            beans[ind,3] := 999999;
+                            gotoXY(i,j);
+                            write('*');
                             ind := ind + 1;
                             beans_amount := beans_amount + 1;
                         End;
         End;
     beans_amount := beans_amount - 1;
     // set endtime
-    endtime := convertToInt(time+encodeTime(0,0,5,0));
-    // i.e. last 5s
+    endtime := convertToInt(time+encodeTime(0,0,5,0)); // i.e. last 5s    
     For i := 0 To 254 Do
         // find an unused position to save buff
         Begin
@@ -639,6 +622,8 @@ Begin
                 write(' ');
             End;
     drawsnake;
+    horizontalWalls(wall_number,wall_length,wall_amount);
+    verticalWalls(wall_number,wall_length,wall_amount);
     initiateBean(beans_amount_default);
     beans_amount := beans_amount_default;
 End;
@@ -778,40 +763,37 @@ Var x,y,wasx,wasy,tmp:   Integer;
 Begin
     // get direction from main program
     Case dir Of 
-        1:
+        1: // right (i.e. east)
              Begin
                  x :=  1;
                  y := 0;
              End;
-        // right (i.e. east)
-        2:
+        
+        2: // down (i.e. south)
              Begin
                  x :=  0;
                  y := 1;
              End;
-        // down (i.e. south)
-        3:
+        3: // left (i.e. west)
              Begin
                  x := -1;
                  y := 0;
              End;
-        // left (i.e. west)
-        4:
+        4: // up (i.e. north)
              Begin
                  x :=  0;
                  y := -1;
              End;
-        // up (i.e. north)
     End;
     // ***** Moving *****
+    // change snake head to body
     gotoXY(body[0,0], body[0,1]);
     write('x');
-    // change snake head to body
+    // change snake tail to empty
     wasx := body[len-1,0];
     wasy := body[len-1,1];
     gotoXY(wasx, wasy);
     write(' ');
-    // change snake tail to empty
     // check if snake meets itself
     If (snakeContain(body[0,0]+x, body[0,1]+y)) Then snakeDie;
     // change segment of snake: from previous position to next position
@@ -928,10 +910,10 @@ Begin
     wall_number := 4;
     wall_length := 3;
     wall_amount := wall_number * wall_length;
-    space_width := 80;
     // width of gaming space
-    space_height := 24;
+    space_width := 80;
     // height of gaming space
+    space_height := 24;
     // initiate snake and buff array
     For indice := 0 To 254 Do
         body[indice,0] := 0;
@@ -951,10 +933,10 @@ Begin
         Begin
             ClrScr;
             textColor(lightblue);
+            // gaming area
             drawbox(1,1,space_width,space_height,'');
-            //moving space, wall
-            drawbox(1,1,space_width,3,'Jeu de Serpent (c) 2018');
             // title of the game
+            drawbox(1,1,space_width,3,'Jeu de Serpent (c) 2018');
             // print initial snake on screen
             textColor(lightred);
             drawsnake;
@@ -983,28 +965,21 @@ Begin
                             Begin
                                 key := readkey;
                                 Case key Of 
-                                    #77:   dirnew := 1;
-                                    // right (i.e. east)
-                                    #80:   dirnew := 2;
-                                    // down (i.e. south)
-                                    #75:   dirnew := 3;
-                                    // left (i.e. west)
-                                    #72:   dirnew := 4;
-                                    // up (i.e. north)
+                                    #77:   dirnew := 1; // right (i.e. east)
+                                    #80:   dirnew := 2; // down (i.e. south)
+                                    #75:   dirnew := 3; // left (i.e. west)
+                                    #72:   dirnew := 4; // up (i.e. north)
                                 End;
-                                If (dir = 1) And (dirnew <> 3) Then dir := dirnew;
-                                If (dir = 2) And (dirnew <> 4) Then dir := dirnew;
-                                If (dir = 3) And (dirnew <> 1) Then dir := dirnew;
-                                If (dir = 4) And (dirnew <> 2) Then dir := dirnew;
+                                If (dir = 1) And (dirnew <> 3) Then dir:=dirnew;
+                                If (dir = 2) And (dirnew <> 4) Then dir:=dirnew;
+                                If (dir = 3) And (dirnew <> 1) Then dir:=dirnew;
+                                If (dir = 4) And (dirnew <> 2) Then dir:=dirnew;
                             End;
-                        If (key = #27) Then snakeDie;
-                        // press ESC key
+                        If (key = #27) Then snakeDie; // press ESC key
                     End;
                 movesnake;
                 checkTime;
                 gotoXY(2,2);
             Until false;
-            textColor(lightgray);
-            gotoXY(1,25);
         End;
 End.
