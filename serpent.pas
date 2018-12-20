@@ -789,6 +789,7 @@ end;
 
 //* vvvvvvvvvvvvvvvvvvvvvvvvv Welcome Window vvvvvvvvvvvvvvvvvvvvvvvvv
 procedure intros;
+var i:integer;
 begin
 	gotoXY(24,4);
 	writeln('Bienvenue au jeu de serpent!');
@@ -803,17 +804,30 @@ begin
 	gotoXY(19,9);
 	writeln('Entrez f pour facile et d pour difficile');
 	readln(diff);
+	i:=10;
+	if (diff<>'d') and (diff<>'f') then
+	begin
+		repeat 
+		gotoxy(19,i);
+		writeln('Error! Vous devez entrer la lettre f ou d');
+		gotoxy(19,i+1);
+		writeln('Entrez f pour facile et d pour difficile');
+		readln (diff);
+		i:=i+1;
+		until (diff='f') or (diff='d');
+	end;
 	if diff='f' then
 	begin
-		gotoXY(23,10);
+		gotoXY(23,i+1);
 		writeln('Vous avez choisir la mode facile');
 	end;
+	
 	if diff='d' then
 	begin
-		gotoXY(21,10);
+		gotoXY(21,i+1);
 		writeln('Vous avez choisir la mode difficile');
 	end;
-	gotoXY(24,11);
+	gotoXY(24,i+2);
 	writeln('Entrez c pour commencer la jeu');
 	readln(start);
 end;
